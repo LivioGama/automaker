@@ -74,6 +74,20 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
   // Keep track of whether we've fetched initial logs
   const hasFetchedInitialLogs = useRef(false);
 
+  // Buffer for batching rapid output events into fewer setState calls.
+  // Content accumulates here and is flushed via requestAnimationFrame,
+  // ensuring at most one React re-render per animation frame (~60fps max).
+  const pendingOutputRef = useRef('');
+  const rafIdRef = useRef<number | null>(null);
+
+  const resetPendingOutput = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    pendingOutputRef.current = '';
+  }, []);
+
   /**
    * Fetch buffered logs from the server
    */
@@ -130,6 +144,7 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
    * Clear logs and reset state
    */
   const clearLogs = useCallback(() => {
+    resetPendingOutput();
     setState({
       logs: '',
       logsVersion: 0,
@@ -144,13 +159,7 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
       serverError: null,
     });
     hasFetchedInitialLogs.current = false;
-  }, []);
-
-  // Buffer for batching rapid output events into fewer setState calls.
-  // Content accumulates here and is flushed via requestAnimationFrame,
-  // ensuring at most one React re-render per animation frame (~60fps max).
-  const pendingOutputRef = useRef('');
-  const rafIdRef = useRef<number | null>(null);
+  }, [resetPendingOutput]);
 
   const flushPendingOutput = useCallback(() => {
     rafIdRef.current = null;
@@ -197,12 +206,9 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
   // Clean up pending RAF on unmount to prevent state updates after unmount
   useEffect(() => {
     return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
+      resetPendingOutput();
     };
-  }, []);
+  }, [resetPendingOutput]);
 
   // Fetch initial logs when worktreePath changes
   useEffect(() => {
@@ -230,6 +236,7 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
 
       switch (event.type) {
         case 'dev-server:started': {
+          resetPendingOutput();
           const { payload } = event;
           logger.info('Dev server started:', payload);
           setState((prev) => ({
@@ -279,7 +286,7 @@ export function useDevServerLogs({ worktreePath, autoSubscribe = true }: UseDevS
     });
 
     return unsubscribe;
-  }, [worktreePath, autoSubscribe, appendLogs]);
+  }, [worktreePath, autoSubscribe, appendLogs, resetPendingOutput]);
 
   return {
     ...state,

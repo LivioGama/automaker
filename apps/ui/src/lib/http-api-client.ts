@@ -930,7 +930,8 @@ export class HttpApiClient implements ElectronAPI {
           const isHighFrequency =
             data.type === 'dev-server:output' ||
             data.type === 'test-runner:output' ||
-            data.type === 'auto_mode_progress';
+            data.type === 'feature:progress' ||
+            (data.type === 'auto-mode:event' && data.payload?.type === 'auto_mode_progress');
           if (!isHighFrequency) {
             logger.info('WebSocket message:', data.type);
           }

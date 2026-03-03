@@ -248,16 +248,12 @@ export default defineConfig(({ command }) => {
         { find: '@', replacement: path.resolve(__dirname, './src') },
         // Force ALL React imports (including from nested deps like zustand@4 inside
         // @xyflow/react) to resolve to a single copy.
+        // Explicit subpath aliases must come BEFORE the broad regex so Vite's
+        // first-match-wins resolution applies the specific match first.
         {
           find: /^react-dom(\/|$)/,
           replacement: path.resolve(__dirname, '../../node_modules/react-dom') + '/',
         },
-        {
-          find: /^react(\/|$)/,
-          replacement: path.resolve(__dirname, '../../node_modules/react') + '/',
-        },
-        // Explicit subpath aliases avoid mixed module IDs between bare imports and
-        // optimized deps (e.g. react/jsx-runtime), which can manifest as duplicate React.
         {
           find: 'react/jsx-runtime',
           replacement: path.resolve(__dirname, '../../node_modules/react/jsx-runtime.js'),
@@ -265,6 +261,10 @@ export default defineConfig(({ command }) => {
         {
           find: 'react/jsx-dev-runtime',
           replacement: path.resolve(__dirname, '../../node_modules/react/jsx-dev-runtime.js'),
+        },
+        {
+          find: /^react(\/|$)/,
+          replacement: path.resolve(__dirname, '../../node_modules/react') + '/',
         },
       ],
       dedupe: ['react', 'react-dom', 'zustand', 'use-sync-external-store', '@xyflow/react'],
