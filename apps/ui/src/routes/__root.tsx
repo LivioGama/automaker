@@ -613,7 +613,10 @@ function RootLayoutContent() {
                   // Reconcile ntfy endpoints from server (same rationale as eventHooks)
                   const serverEndpoints = (finalSettings as GlobalSettings).ntfyEndpoints ?? [];
                   const currentEndpoints = useAppStore.getState().ntfyEndpoints;
-                  if (JSON.stringify(serverEndpoints) !== JSON.stringify(currentEndpoints)) {
+                  if (
+                    JSON.stringify(serverEndpoints) !== JSON.stringify(currentEndpoints) &&
+                    serverEndpoints.length > 0
+                  ) {
                     logger.info(
                       `[FAST_HYDRATE] Reconciling ntfyEndpoints from server (server=${serverEndpoints.length}, store=${currentEndpoints.length})`
                     );
