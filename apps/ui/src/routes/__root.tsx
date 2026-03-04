@@ -600,10 +600,7 @@ function RootLayoutContent() {
                   // so updating them won't cause a visible re-render flash.
                   const serverHooks = (finalSettings as GlobalSettings).eventHooks ?? [];
                   const currentHooks = useAppStore.getState().eventHooks;
-                  if (
-                    JSON.stringify(serverHooks) !== JSON.stringify(currentHooks) &&
-                    serverHooks.length > 0
-                  ) {
+                  if (JSON.stringify(serverHooks) !== JSON.stringify(currentHooks)) {
                     logger.info(
                       `[FAST_HYDRATE] Reconciling eventHooks from server (server=${serverHooks.length}, store=${currentHooks.length})`
                     );
@@ -613,10 +610,7 @@ function RootLayoutContent() {
                   // Reconcile ntfy endpoints from server (same rationale as eventHooks)
                   const serverEndpoints = (finalSettings as GlobalSettings).ntfyEndpoints ?? [];
                   const currentEndpoints = useAppStore.getState().ntfyEndpoints;
-                  if (
-                    JSON.stringify(serverEndpoints) !== JSON.stringify(currentEndpoints) &&
-                    serverEndpoints.length > 0
-                  ) {
+                  if (JSON.stringify(serverEndpoints) !== JSON.stringify(currentEndpoints)) {
                     logger.info(
                       `[FAST_HYDRATE] Reconciling ntfyEndpoints from server (server=${serverEndpoints.length}, store=${currentEndpoints.length})`
                     );
