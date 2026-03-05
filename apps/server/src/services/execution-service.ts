@@ -179,6 +179,7 @@ ${feature.spec}
     const abortController = tempRunningFeature.abortController;
     if (isAutoMode) await this.saveExecutionStateFn(projectPath);
     let feature: Feature | null = null;
+    let pipelineCompleted = false;
 
     try {
       validateWorkingDirectory(projectPath);
@@ -431,6 +432,7 @@ Please continue from where you left off and complete all remaining tasks. Use th
           testAttempts: 0,
           maxTestAttempts: 5,
         });
+        pipelineCompleted = true;
         // Check if pipeline set a terminal status (e.g., merge_conflict) — don't overwrite it
         const refreshed = await this.loadFeatureFn(projectPath, featureId);
         if (refreshed?.status === 'merge_conflict') {
@@ -541,7 +543,30 @@ Please continue from where you left off and complete all remaining tasks. Use th
         }
       } else {
         logger.error(`Feature ${featureId} failed:`, error);
-        await this.updateFeatureStatusFn(projectPath, featureId, 'backlog');
+        // If pipeline steps completed successfully, don't send the feature back to backlog.
+        // The pipeline work is done — set to waiting_approval so the user can review.
+        const fallbackStatus = pipelineCompleted ? 'waiting_approval' : 'backlog';
+        if (pipelineCompleted) {
+          logger.info(
+            `[executeFeature] Feature ${featureId} failed after pipeline completed. ` +
+              `Setting status to waiting_approval instead of backlog to preserve pipeline work.`
+          );
+        }
+        // Don't overwrite terminal states like 'merge_conflict' that were set during pipeline execution
+        let currentStatus: string | undefined;
+        try {
+          const currentFeature = await this.loadFeatureFn(projectPath, featureId);
+          currentStatus = currentFeature?.status;
+        } catch (loadErr) {
+          // If loading fails, log it and proceed with the status update anyway
+          logger.warn(
+            `[executeFeature] Failed to reload feature ${featureId} for status check:`,
+            loadErr
+          );
+        }
+        if (currentStatus !== 'merge_conflict') {
+          await this.updateFeatureStatusFn(projectPath, featureId, fallbackStatus);
+        }
         this.eventBus.emitAutoModeEvent('auto_mode_error', {
           featureId,
           featureName: feature?.title,
