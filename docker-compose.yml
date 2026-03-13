@@ -74,7 +74,7 @@ services:
       - IS_CONTAINERIZED=true
     volumes:
       # Host projects directory - check out repos on host and see them in AutoMaker
-      - ~/projects:/projects
+      - /home/devuser/projects:/projects
 
       # ONLY named volumes - these are isolated from your host filesystem
       # This volume persists data between restarts but is container-managed
