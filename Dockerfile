@@ -93,30 +93,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Claude CLI globally (available to all users via npm global bin)
 RUN npm install -g @anthropic-ai/claude-code
 
-# Create non-root user with home directory BEFORE installing Cursor CLI
-# Uses UID/GID build args to match host user for mounted volume permissions
-# Use -o flag to allow non-unique IDs (GID 1000 may already exist as 'node' group)
-RUN groupadd -o -g ${GID} automaker && \
-    useradd -o -u ${UID} -g automaker -m -d /home/automaker -s /bin/bash automaker && \
-    mkdir -p /home/automaker/.local/bin && \
-    mkdir -p /home/automaker/.cursor && \
-    chown -R automaker:automaker /home/automaker && \
-    chmod 700 /home/automaker/.cursor
+# Create devuser with home directory for running AutoMaker
+# This allows AutoMaker to use devuser's SSH keys, configs, and credentials
+RUN useradd -m -d /home/devuser -s /bin/bash devuser && \
+    mkdir -p /home/devuser/.local/bin && \
+    mkdir -p /home/devuser/.cursor && \
+    chown -R devuser:devuser /home/devuser && \
+    chmod 700 /home/devuser/.cursor
 
 # Install Cursor CLI as the automaker user
-# Set HOME explicitly and install to /home/automaker/.local/bin/
-USER automaker
-ENV HOME=/home/automaker
+# Set HOME explicitly and install to /home/devuser/.local/bin/
+USER devuser
+ENV HOME=/home/devuser
 RUN curl https://cursor.com/install -fsS | bash && \
     echo "=== Checking Cursor CLI installation ===" && \
-    ls -la /home/automaker/.local/bin/ && \
+    ls -la /home/devuser/.local/bin/ && \
     echo "=== PATH is: $PATH ===" && \
     (which cursor-agent && cursor-agent --version) || echo "cursor-agent installed (may need auth setup)"
 
 # Install OpenCode CLI (for multi-provider AI model access)
 RUN curl -fsSL https://opencode.ai/install | bash && \
     echo "=== Checking OpenCode CLI installation ===" && \
-    ls -la /home/automaker/.local/bin/ && \
+    ls -la /home/devuser/.local/bin/ && \
     (which opencode && opencode --version) || echo "opencode installed (may need auth setup)"
 
 # Install Codex, Gemini, and GitHub Copilot CLIs globally (available to all users)
@@ -129,15 +127,15 @@ RUN npm install -g @openai/codex @google/gemini-cli @github/copilot && \
 
 # Add PATH to profile so it's available in all interactive shells (for login shells)
 RUN mkdir -p /etc/profile.d && \
-    echo 'export PATH="/home/automaker/.local/bin:$PATH"' > /etc/profile.d/cursor-cli.sh && \
+    echo 'export PATH="/home/devuser/.local/bin:$PATH"' > /etc/profile.d/cursor-cli.sh && \
     chmod +x /etc/profile.d/cursor-cli.sh
 
 # Add to automaker's .bashrc for bash interactive shells
-RUN echo 'export PATH="/home/automaker/.local/bin:$PATH"' >> /home/automaker/.bashrc && \
-    chown automaker:automaker /home/automaker/.bashrc
+RUN echo 'export PATH="/home/devuser/.local/bin:$PATH"' >> /home/devuser/.bashrc && \
+    chown automaker:automaker /home/devuser/.bashrc
 
 # Also add to root's .bashrc since docker exec defaults to root
-RUN echo 'export PATH="/home/automaker/.local/bin:$PATH"' >> /root/.bashrc
+RUN echo 'export PATH="/home/devuser/.local/bin:$PATH"' >> /root/.bashrc
 
 WORKDIR /app
 
@@ -181,9 +179,9 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Environment variables
 ENV PORT=3008
 ENV DATA_DIR=/data
-ENV HOME=/home/automaker
+ENV HOME=/home/devuser
 # Add user's local bin to PATH for cursor-agent
-ENV PATH="/home/automaker/.local/bin:${PATH}"
+ENV PATH="/home/devuser/.local/bin:${PATH}"
 
 # Expose port
 EXPOSE 3008
