@@ -154,13 +154,12 @@ COPY --from=server-builder /app/apps/server/package*.json ./apps/server/
 # Copy node_modules (includes symlinks to libs)
 COPY --from=server-builder /app/node_modules ./node_modules
 
-# Install Playwright Chromium browser for AI agent verification tests
+# Install Playwright Chromium browser for AI agent verification tests (optional, non-blocking)
 # This adds ~300MB to the image but enables automated testing mode out of the box
 # Using the locally installed playwright ensures we use the pinned version from package-lock.json
 USER automaker
-RUN ./node_modules/.bin/playwright install chromium && \
-    echo "=== Playwright Chromium installed ===" && \
-    ls -la /home/automaker/.cache/ms-playwright/
+RUN ./node_modules/.bin/playwright install chromium || echo "Playwright Chromium install skipped (optional dependency)" && \
+    echo "=== Playwright setup complete ==="
 USER root
 
 # Create data and projects directories
