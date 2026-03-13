@@ -73,6 +73,9 @@ services:
       # This is used by the UI to determine if sandbox risk warnings should be shown
       - IS_CONTAINERIZED=true
     volumes:
+      # Host projects directory - check out repos on host and see them in AutoMaker
+      - ~/projects:/projects
+
       # ONLY named volumes - these are isolated from your host filesystem
       # This volume persists data between restarts but is container-managed
       - automaker-data:/data
