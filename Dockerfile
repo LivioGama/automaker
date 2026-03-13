@@ -119,7 +119,12 @@ RUN curl -fsSL https://opencode.ai/install | bash && \
     ls -la /home/automaker/.local/bin/ && \
     (which opencode && opencode --version) || echo "opencode installed (may need auth setup)"
 
+# Install Codex and Gemini CLIs globally (available to all users)
 USER root
+RUN npm install -g @openai/codex @google/gemini-cli && \
+    echo "=== Checking Codex and Gemini installation ===" && \
+    (which codex && codex --version) || echo "codex installed" && \
+    (which gemini && gemini --version) || echo "gemini installed"
 
 # Add PATH to profile so it's available in all interactive shells (for login shells)
 RUN mkdir -p /etc/profile.d && \
