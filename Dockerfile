@@ -119,12 +119,13 @@ RUN curl -fsSL https://opencode.ai/install | bash && \
     ls -la /home/automaker/.local/bin/ && \
     (which opencode && opencode --version) || echo "opencode installed (may need auth setup)"
 
-# Install Codex and Gemini CLIs globally (available to all users)
+# Install Codex, Gemini, and GitHub Copilot CLIs globally (available to all users)
 USER root
-RUN npm install -g @openai/codex @google/gemini-cli && \
-    echo "=== Checking Codex and Gemini installation ===" && \
+RUN npm install -g @openai/codex @google/gemini-cli @github/copilot && \
+    echo "=== Checking Codex, Gemini, and Copilot installation ===" && \
     (which codex && codex --version) || echo "codex installed" && \
-    (which gemini && gemini --version) || echo "gemini installed"
+    (which gemini && gemini --version) || echo "gemini installed" && \
+    (which copilot && copilot --version) || echo "copilot installed"
 
 # Add PATH to profile so it's available in all interactive shells (for login shells)
 RUN mkdir -p /etc/profile.d && \
