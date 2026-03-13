@@ -130,9 +130,9 @@ RUN mkdir -p /etc/profile.d && \
     echo 'export PATH="/home/devuser/.local/bin:$PATH"' > /etc/profile.d/cursor-cli.sh && \
     chmod +x /etc/profile.d/cursor-cli.sh
 
-# Add to automaker's .bashrc for bash interactive shells
+# Add to devuser's .bashrc for bash interactive shells
 RUN echo 'export PATH="/home/devuser/.local/bin:$PATH"' >> /home/devuser/.bashrc && \
-    chown automaker:automaker /home/devuser/.bashrc
+    chown devuser:devuser /home/devuser/.bashrc
 
 # Also add to root's .bashrc since docker exec defaults to root
 RUN echo 'export PATH="/home/devuser/.local/bin:$PATH"' >> /root/.bashrc
@@ -155,13 +155,13 @@ COPY --from=server-builder /app/node_modules ./node_modules
 # Install Playwright Chromium browser for AI agent verification tests (optional, non-blocking)
 # This adds ~300MB to the image but enables automated testing mode out of the box
 # Using the locally installed playwright ensures we use the pinned version from package-lock.json
-USER automaker
+USER devuser
 RUN ./node_modules/.bin/playwright install chromium || echo "Playwright Chromium install skipped (optional dependency)" && \
     echo "=== Playwright setup complete ==="
 USER root
 
 # Create data and projects directories
-RUN mkdir -p /data /projects && chown automaker:automaker /data /projects
+RUN mkdir -p /data /projects && chown devuser:devuser /data /projects
 
 # Configure git for mounted volumes and authentication
 # Use --system so it's not overwritten by mounted user .gitconfig
@@ -174,7 +174,7 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Note: We stay as root here so entrypoint can fix permissions
-# The entrypoint script will switch to automaker user before running the command
+# The entrypoint script will switch to devuser before running the command
 
 # Environment variables
 ENV PORT=3008
