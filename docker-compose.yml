@@ -15,12 +15,13 @@ services:
       context: .
       dockerfile: Dockerfile
       target: ui
-    container_name: automaker-ui
     restart: unless-stopped
     ports:
-      - '3007:80'
+      - '${UI_PORT:-3007}:80'
     depends_on:
       - server
+    networks:
+      - automaker
 
   # Backend API Server
   server:
@@ -33,10 +34,11 @@ services:
         # Override with: UID=$(id -u) GID=$(id -g) docker-compose build
         UID: ${UID:-1001}
         GID: ${GID:-1001}
-    container_name: automaker-server
     restart: unless-stopped
     ports:
-      - '3008:3008'
+      - '${SERVER_PORT:-3008}:3008'
+    networks:
+      - automaker
     environment:
       # Optional - Anthropic API key
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -136,3 +138,8 @@ volumes:
     name: automaker-opencode-cache
     # Named volume for OpenCode cache directory (~/.cache/opencode)
     # Contains version file and other cached data
+
+networks:
+  automaker:
+    name: automaker
+    driver: bridge

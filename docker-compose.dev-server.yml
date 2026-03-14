@@ -22,10 +22,11 @@ services:
         # Override with: UID=$(id -u) GID=$(id -g) docker-compose build
         UID: ${UID:-1001}
         GID: ${GID:-1001}
-    container_name: automaker-dev-server-only
     restart: unless-stopped
     ports:
-      - '3008:3008'
+      - '${SERVER_PORT:-3008}:3008'
+    networks:
+      - automaker
     environment:
       # Optional - Anthropic API key
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -104,3 +105,8 @@ volumes:
 
   automaker-cursor-config:
     name: automaker-cursor-config
+
+networks:
+  automaker:
+    name: automaker
+    driver: bridge
